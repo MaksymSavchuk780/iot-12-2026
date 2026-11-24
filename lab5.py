@@ -10,7 +10,18 @@ class WeatherType(Enum):
 
 
 class Weather:
-    def __init__(self, day, city, country, temp, humidity, wind_speed, weather_type):
+    def __init__(
+        self,
+        day,
+        city,
+        country,
+        temp,
+        humidity,
+        wind_speed,
+        weather_type
+    ):
+        if not isinstance(weather_type, WeatherType):
+            raise TypeError(f"weather_type must be a WeatherType, got {type(weather_type).__name__}")
         self._day = day
         self._city = city
         self._country = country
@@ -21,6 +32,13 @@ class Weather:
 
     def __del__(self):
         print(f"[Деструктор] Видалено запис погоди: {self._city} (день {self._day})")
+
+    def __str__(self):
+        return (
+            f"День: {self._day} | {self._city}, {self._country} | "
+            f"Температура: {self._temp}°C | Вологість: {self._humidity}% | "
+            f"Вітер: {self._wind_speed} м/с | Стан: {self._weather_type.value}"
+        )
 
     @property
     def day(self):
@@ -76,16 +94,11 @@ class Weather:
 
     @weather_type.setter
     def weather_type(self, value):
+        if not isinstance(value, WeatherType):
+            raise TypeError(f"weather_type must be a WeatherType, got {type(value).__name__}")
         self._weather_type = value
 
-    def display(self):
-        print(
-            f"День: {self._day} | {self._city}, {self._country} | "
-            f"Температура: {self._temp}°C | Вологість: {self._humidity}% | "
-            f"Вітер: {self._wind_speed} м/с | Стан: {self._weather_type.value}"
-        )
-
-    def isLvivWeather(self, humidity=None, weather_type=None):
+    def is_lviv_weather(self, humidity=None, weather_type=None):
         if isinstance(self, Weather):
             if humidity is None:
                 humidity = self._humidity
@@ -101,17 +114,13 @@ class Weather:
             weather_val = str(weather_type)
 
         if humidity > 80 and weather_val == "RAINY":
-            print("The typical day in Lviv")
-        else:
-            print("You’re lucky, man")
+            return True
+        return False
 
 
 class WeatherCalendar:
     def __init__(self, records=None):
-        if records is None:
-            self.records = []
-        else:
-            self.records = records
+        self.records = list(records) if records is not None else []
 
     def __del__(self):
         print(f"[Деструктор] Видалено WeatherCalendar із {len(self.records)} записами.")
@@ -120,23 +129,20 @@ class WeatherCalendar:
         self.records.append(weather)
 
     def sort_by_day(self):
-        self.records.sort(key=lambda w: w.day)
+        self.records.sort(key=lambda weather: weather.day)
 
     def display(self):
-        if len(self.records) == 0:
+        if not self.records:
             print("Календар порожній.")
         else:
-            for w in self.records:
-                w.display()
+            for weather in self.records:
+                print(weather)
 
 
-def findMaxTemprature(weather_list, day):
-    matching = []
-    for w in weather_list:
-        if w.day == day:
-            matching.append(w.temp)
+def find_max_temperature(weather_list, day):
+    matching = [weather.temp for weather in weather_list if weather.day == day]
 
-    if len(matching) == 0:
+    if not matching:
         print("Not enough data")
         return None
 
@@ -146,13 +152,53 @@ def findMaxTemprature(weather_list, day):
 
 
 def main():
-    w1 = Weather(15, "Lviv", "Ukraine", 11.5, 89.0, 4.2, WeatherType.RAINY)
-    w2 = Weather(3, "Kyiv", "Ukraine", 18.0, 55.0, 3.0, WeatherType.SUNNY)
-    w3 = Weather(10, "Odesa", "Ukraine", 21.4, 60.0, 6.1, WeatherType.CLOUDY)
-    w4 = Weather(10, "Kharkiv", "Ukraine", 24.2, 45.0, 2.5, WeatherType.SUNNY)
-    w5 = Weather(25, "Dnipro", "Ukraine", 30.0, 70.0, 5.0, WeatherType.SUNNY)
+    lviv_weather = Weather(
+        day=15,
+        city="Lviv",
+        country="Ukraine",
+        temp=11.5,
+        humidity=89.0,
+        wind_speed=4.2,
+        weather_type=WeatherType.RAINY
+    )
+    kyiv_weather = Weather(
+        day=3,
+        city="Kyiv",
+        country="Ukraine",
+        temp=18.0,
+        humidity=55.0,
+        wind_speed=3.0,
+        weather_type=WeatherType.SUNNY
+    )
+    odesa_weather = Weather(
+        day=10,
+        city="Odesa",
+        country="Ukraine",
+        temp=21.4,
+        humidity=60.0,
+        wind_speed=6.1,
+        weather_type=WeatherType.CLOUDY
+    )
+    kharkiv_weather = Weather(
+        day=10,
+        city="Kharkiv",
+        country="Ukraine",
+        temp=24.2,
+        humidity=45.0,
+        wind_speed=2.5,
+        weather_type=WeatherType.SUNNY
+    )
+    dnipro_weather = Weather(
+        day=25,
+        city="Dnipro",
+        country="Ukraine",
+        temp=30.0,
+        humidity=70.0,
+        wind_speed=5.0,
+        weather_type=WeatherType.SUNNY
+    )
 
-    calendar = WeatherCalendar([w1, w2, w3, w4, w5])
+    calendar = WeatherCalendar([lviv_weather, kyiv_weather, odesa_weather, kharkiv_weather, dnipro_weather])
 
     print("--- Записи погоди ---")
     calendar.display()
@@ -161,24 +207,24 @@ def main():
     calendar.sort_by_day()
     calendar.display()
 
-    print("\n--- Пошук максимальної температури (findMaxTemprature) ---")
-    findMaxTemprature(calendar.records, 10)
-    findMaxTemprature(calendar.records, 25)
+    print("\n--- Пошук максимальної температури (find_max_temperature) ---")
+    find_max_temperature(calendar.records, 10)
+    find_max_temperature(calendar.records, 25)
 
-    print("\n--- Перевірка на погоду у Львові (isLvivWeather) ---")
-    w1.isLvivWeather()
-    w2.isLvivWeather()
-    w5.isLvivWeather()
-    Weather.isLvivWeather(85, WeatherType.RAINY)
+    print("\n--- Перевірка на погоду у Львові (is_lviv_weather) ---")
+    print(lviv_weather.is_lviv_weather())
+    print(kyiv_weather.is_lviv_weather())
+    print(dnipro_weather.is_lviv_weather())
+    Weather.is_lviv_weather(85, WeatherType.RAINY)
 
     print("\n--- Демонстрація функцій доступу (getters / setters) ---")
-    print(f"Початкова температура в {w2.city}: {w2.temp}°C")
-    w2.temp = 19.5
-    print(f"Змінена температура в {w2.city}: {w2.temp}°C")
+    print(f"Початкова температура в {kyiv_weather.city}: {kyiv_weather.temp}°C")
+    kyiv_weather.temp = 19.5
+    print(f"Змінена температура в {kyiv_weather.city}: {kyiv_weather.temp}°C")
 
     print("\n--- Видалення об'єктів (деструктори) ---")
     del calendar
-    del w1, w2, w3, w4
+    del lviv_weather, kyiv_weather, odesa_weather, kharkiv_weather, dnipro_weather
 
 
 if __name__ == "__main__":

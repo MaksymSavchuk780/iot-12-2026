@@ -13,10 +13,19 @@ class WeatherType(Enum):
     SNOWY = "SNOWY"
 
 
-class Weather:  # pylint: disable=too-many-instance-attributes
+def _validate_weather_type(weather_type):
+    """Ensure weather_type is an instance of WeatherType."""
+    if not isinstance(weather_type, WeatherType):
+        raise TypeError(
+            f"weather_type must be a WeatherType, "
+            f"got {type(weather_type).__name__}"
+        )
+
+
+class Weather:
     """Stores and processes a single-day weather record."""
 
-    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def __init__(
         self,
         day,
         city,
@@ -40,26 +49,26 @@ class Weather:  # pylint: disable=too-many-instance-attributes
         Raises:
             TypeError: If weather_type is not a WeatherType instance.
         """
+        _validate_weather_type(weather_type)
         self._day = day
         self._city = city
         self._country = country
         self._temp = temp
         self._humidity = humidity
         self._wind_speed = wind_speed
-        if not isinstance(weather_type, WeatherType):
-            raise TypeError(
-                f"weather_type must be a WeatherType, "
-                f"got {type(weather_type).__name__}"
-            )
         self._weather_type = weather_type
 
     def __del__(self):
         """Destructor: prints a message when the object is deleted."""
-        city = getattr(self, '_city', 'невідомо')
-        day = getattr(self, '_day', '?')
+        if not (
+            hasattr(self, "_city")
+            and hasattr(self, "_day")
+            and hasattr(self, "_weather_type")
+        ):
+            return
         print(
             f"[Деструктор] Видалено запис погоди: "
-            f"{city} (день {day})"
+            f"{self._city} (день {self._day})"
         )
 
     def __str__(self):
@@ -144,11 +153,7 @@ class Weather:  # pylint: disable=too-many-instance-attributes
         Raises:
             TypeError: If value is not a WeatherType instance.
         """
-        if not isinstance(value, WeatherType):
-            raise TypeError(
-                f"weather_type must be a WeatherType, "
-                f"got {type(value).__name__}"
-            )
+        _validate_weather_type(value)
         self._weather_type = value
 
     def is_lviv_weather(self):
@@ -176,12 +181,12 @@ class Weather:  # pylint: disable=too-many-instance-attributes
 
         Returns:
             bool: True if humidity exceeds 80% and weather type is RAINY.
+
+        Raises:
+            TypeError: If weather_type is not a WeatherType instance.
         """
-        if isinstance(weather_type, WeatherType):
-            weather_val = weather_type.value
-        else:
-            weather_val = str(weather_type)
-        return humidity > 80 and weather_val == "RAINY"
+        _validate_weather_type(weather_type)
+        return humidity > 80 and weather_type == WeatherType.RAINY
 
 
 class WeatherCalendar:
@@ -197,6 +202,8 @@ class WeatherCalendar:
 
     def __del__(self):
         """Destructor: prints a message when the calendar is deleted."""
+        if not hasattr(self, "records"):
+            return
         print(
             f"[Деструктор] Видалено WeatherCalendar "
             f"із {len(self.records)} записами."

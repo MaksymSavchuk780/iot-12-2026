@@ -13,12 +13,12 @@ class WeatherType(Enum):
     SNOWY = "SNOWY"
 
 
-def _validate_weather_type(weather_type):
-    """Ensure weather_type is an instance of WeatherType."""
-    if not isinstance(weather_type, WeatherType):
+def _validate_instance(value, expected_type, name):
+    """Ensure value is an instance of expected_type."""
+    if not isinstance(value, expected_type):
         raise TypeError(
-            f"weather_type must be a WeatherType, "
-            f"got {type(weather_type).__name__}"
+            f"{name} must be a {expected_type.__name__}, "
+            f"got {type(value).__name__}"
         )
 
 
@@ -49,7 +49,7 @@ class Weather:
         Raises:
             TypeError: If weather_type is not a WeatherType instance.
         """
-        _validate_weather_type(weather_type)
+        _validate_instance(weather_type, WeatherType, "weather_type")
         self._day = day
         self._city = city
         self._country = country
@@ -59,7 +59,7 @@ class Weather:
         self._weather_type = weather_type
 
     def __del__(self):
-        """Destructor: prints a message when the object is deleted."""
+        """Print a message when the weather record is deleted."""
         if not (
             hasattr(self, "_city")
             and hasattr(self, "_day")
@@ -153,17 +153,14 @@ class Weather:
         Raises:
             TypeError: If value is not a WeatherType instance.
         """
-        _validate_weather_type(value)
+        _validate_instance(value, WeatherType, "weather_type")
         self._weather_type = value
 
     def is_lviv_weather(self):
         """Check whether this record represents typical Lviv weather.
 
-        Returns True if the city is Lviv, humidity exceeds 80%,
-        and the weather type is RAINY.
-
         Returns:
-            bool: True if the record matches typical Lviv weather.
+            bool: True for Lviv with humidity over 80% and RAINY weather.
         """
         return (
             self._city == "Lviv"
@@ -185,7 +182,7 @@ class Weather:
         Raises:
             TypeError: If weather_type is not a WeatherType instance.
         """
-        _validate_weather_type(weather_type)
+        _validate_instance(weather_type, WeatherType, "weather_type")
         return humidity > 80 and weather_type == WeatherType.RAINY
 
 
@@ -196,12 +193,22 @@ class WeatherCalendar:
         """Initialize the weather calendar.
 
         Args:
-            records: List of Weather objects (copied defensively).
+            records: Optional iterable of Weather objects.
+
+        Raises:
+            TypeError: If records is not iterable or contains non-Weather
+                items.
         """
-        self.records = list(records) if records is not None else []
+        if records is None:
+            self.records = []
+            return
+        record_list = list(records)
+        for record in record_list:
+            _validate_instance(record, Weather, "record")
+        self.records = record_list
 
     def __del__(self):
-        """Destructor: prints a message when the calendar is deleted."""
+        """Print a message when the weather calendar is deleted."""
         if not hasattr(self, "records"):
             return
         print(
@@ -214,7 +221,11 @@ class WeatherCalendar:
 
         Args:
             weather: Weather object to add.
+
+        Raises:
+            TypeError: If weather is not a Weather instance.
         """
+        _validate_instance(weather, Weather, "weather")
         self.records.append(weather)
 
     def sort_by_day(self):
@@ -257,7 +268,7 @@ def find_max_temperature(weather_list, day):
 
 
 def main():
-    """Entry point demonstrating the Weather and WeatherCalendar classes."""
+    """Demonstrate the Weather and WeatherCalendar classes."""
     lviv_weather = Weather(
         day=15,
         city="Lviv",
